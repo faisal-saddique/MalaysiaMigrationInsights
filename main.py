@@ -18,7 +18,7 @@ st.subheader("Analyze foreign entries into Malaysia by various dimensions")
 @st.cache_data
 def load_data():
     df = pd.read_csv('arrivals_soe.csv')
-    df['Date'] = pd.to_datetime(df['Date'])
+    df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
     df['Year'] = df['Date'].dt.year
     df['Month'] = df['Date'].dt.month_name()
     return df
@@ -30,11 +30,13 @@ st.sidebar.header("Filter Data Here:")
 
 # Year selection
 years = df['Year'].sort_values().unique()
-selected_years = st.sidebar.multiselect("Select Year(s):", options=years, default=years)
+selected_years = st.sidebar.multiselect(
+    "Select Year(s):", options=years, default=years)
 
 # Month selection
 months = df['Month'].unique()
-selected_months = st.sidebar.multiselect("Select Month(s):", options=months, default=months)
+selected_months = st.sidebar.multiselect(
+    "Select Month(s):", options=months, default=months)
 
 # Gender selection
 genders = ['Male', 'Female']
@@ -42,7 +44,8 @@ selected_gender = st.sidebar.selectbox("Select Gender:", options=genders)
 
 # State selection
 states = df['Migration State'].unique()
-selected_states = st.sidebar.multiselect("Select State(s):", options=states, default=states)
+selected_states = st.sidebar.multiselect(
+    "Select State(s):", options=states, default=states)
 
 # Filter data based on selections
 filtered_df = df[
@@ -57,7 +60,8 @@ gender_column = 'Arrivals: Gender Male' if selected_gender == 'Male' else 'Arriv
 # 1) Total amount foreign entry by Gender (x-axis) by Year (y-axis)
 st.markdown("### Total Foreign Entries by Gender and Year")
 total_entries = filtered_df.groupby('Year')[gender_column].sum().reset_index()
-fig1 = px.bar(total_entries, x='Year', y=gender_column, color_discrete_sequence=['#1f77b4'])
+fig1 = px.bar(total_entries, x='Year', y=gender_column,
+              color_discrete_sequence=['#1f77b4'])
 st.plotly_chart(fig1, use_container_width=True)
 
 # 2) Percentage increase/decrease of foreign entries by Gender and Year
@@ -66,25 +70,37 @@ total_entries['Percentage Change'] = total_entries[gender_column].pct_change() *
 fig2 = px.line(total_entries, x='Year', y='Percentage Change', markers=True)
 st.plotly_chart(fig2, use_container_width=True)
 
-# 3) Percentage increase/decrease of foreign entry by State (Pie Chart)
-st.markdown("### Percentage of Foreign Entries by State")
-state_entries = filtered_df.groupby('Migration State')['Arrivals'].sum().reset_index()
-fig3 = px.pie(state_entries, names='Migration State', values='Arrivals')
+# 3) Total Foreign Nationals by Year (including males and females)
+st.markdown("### Total Foreign Nationals Entering Malaysia by Year")
+total_nationals = filtered_df.groupby('Year').agg(
+    Total_Arrivals=pd.NamedAgg(column='Arrivals', aggfunc='sum')
+).reset_index()
+fig3 = px.bar(total_nationals, x='Year', y='Total_Arrivals',
+              color_discrete_sequence=['#ff7f0e'])
 st.plotly_chart(fig3, use_container_width=True)
 
-# 4) Top 5 foreign entries by Country
+# 4) Percentage increase/decrease of foreign entries by State (Pie Chart)
+st.markdown("### Percentage of Foreign Entries by State")
+state_entries = filtered_df.groupby('Migration State')['Arrivals'].sum().reset_index()
+fig4 = px.pie(state_entries, names='Migration State', values='Arrivals')
+st.plotly_chart(fig4, use_container_width=True)
+
+# 5) Top 5 foreign entries by Country
 st.markdown("### Top 5 Countries by Foreign Entries")
 country_entries = filtered_df.groupby('Country')['Arrivals'].sum().reset_index()
 top_countries = country_entries.nlargest(5, 'Arrivals')
-fig4 = px.bar(top_countries, x='Country', y='Arrivals', color='Country')
-st.plotly_chart(fig4, use_container_width=True)
+fig5 = px.bar(top_countries, x='Country', y='Arrivals', color='Country')
+st.plotly_chart(fig5, use_container_width=True)
 
-# 5) Total Foreign Entry to Each State
+# 6) Total Foreign Entry to Each State
 st.markdown("### Total Foreign Entries to Each State")
 state_total_entries = filtered_df.groupby('Migration State')['Arrivals'].sum().reset_index()
-fig5 = px.bar(state_total_entries, x='Migration State', y='Arrivals', color='Arrivals')
-st.plotly_chart(fig5, use_container_width=True)
+fig6 = px.bar(state_total_entries, x='Migration State',
+              y='Arrivals', color='Arrivals')
+st.plotly_chart(fig6, use_container_width=True)
 
 # Footer
 st.markdown("---")
-st.markdown("Developed with ❤️ using MellowMegaBytes")
+st.markdown(
+    "Developed with ❤️ using [MellowMegaBytes](https://fiverr.com/fscreates04)"
+)

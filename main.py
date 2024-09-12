@@ -120,6 +120,3 @@ st.plotly_chart(fig7, use_container_width=True)
 
 # Footer
 st.markdown("---")
-st.markdown(
-    "Developed with ❤️ using [MellowMegaBytes](https://fiverr.com/fscreates04)"
-)
